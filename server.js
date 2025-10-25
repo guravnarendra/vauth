@@ -15,6 +15,7 @@ const connectDB = require('./config/database');
 // Import routes
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+app.set('trust proxy', 1);
 
 // Import middleware
 const { cleanupExpiredData } = require('./middleware/cleanup');

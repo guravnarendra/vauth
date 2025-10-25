@@ -1,75 +1,38 @@
+// utils/encryption.js
 const crypto = require('crypto');
-require('dotenv').config();
 
-const ALGORITHM = 'aes-256-gcm';
-const KEY = Buffer.from(process.env.ENCRYPTION_KEY, 'utf8').slice(0, 32); // Ensure 32 bytes
+// Use a strong algorithm and a 32-byte key
+const algorithm = 'aes-256-cbc';
+const secretKey = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex').slice(0, 32);
+const ivLength = 16;
 
-/**
- * Encrypt text using AES-256-GCM
- * @param {string} text - Text to encrypt
- * @returns {string} - Encrypted text with IV and auth tag (base64 encoded)
- */
+// Encrypt function
 function encrypt(text) {
-    try {
-        if (!text) return '';
-        
-        const iv = crypto.randomBytes(16); // 128-bit IV
-        const cipher = crypto.createCipher('aes-256-cbc', KEY); // Use CBC instead of GCM for compatibility
-        
-        let encrypted = cipher.update(text, 'utf8', 'hex');
-        encrypted += cipher.final('hex');
-        
-        // Combine IV and encrypted data
-        const combined = Buffer.concat([
-            iv,
-            Buffer.from(encrypted, 'hex')
-        ]);
-        
-        return combined.toString('base64');
-    } catch (error) {
-        console.error('Encryption error:', error);
-        throw new Error('Failed to encrypt data');
-    }
+  try {
+    const iv = crypto.randomBytes(ivLength);
+    const cipher = crypto.createCipheriv(algorithm, Buffer.from(secretKey), iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return iv.toString('hex') + ':' + encrypted;
+  } catch (err) {
+    console.error('Encryption error:', err);
+    throw new Error('Failed to encrypt data');
+  }
 }
 
-/**
- * Decrypt text using AES-256-CBC
- * @param {string} encryptedData - Encrypted text (base64 encoded)
- * @returns {string} - Decrypted text
- */
-function decrypt(encryptedData) {
-    try {
-        if (!encryptedData) return '';
-        
-        const combined = Buffer.from(encryptedData, 'base64');
-        
-        // Extract IV and encrypted data
-        const iv = combined.slice(0, 16);
-        const encrypted = combined.slice(16);
-        
-        const decipher = crypto.createDecipher('aes-256-cbc', KEY);
-        
-        let decrypted = decipher.update(encrypted, null, 'utf8');
-        decrypted += decipher.final('utf8');
-        
-        return decrypted;
-    } catch (error) {
-        console.error('Decryption error:', error);
-        throw new Error('Failed to decrypt data');
-    }
+// Decrypt function
+function decrypt(text) {
+  try {
+    const [ivHex, encryptedData] = text.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const decipher = crypto.createDecipheriv(algorithm, Buffer.from(secretKey), iv);
+    let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (err) {
+    console.error('Decryption error:', err);
+    throw new Error('Failed to decrypt data');
+  }
 }
 
-/**
- * Generate a random encryption key
- * @returns {string} - Random 32-byte key in hex format
- */
-function generateKey() {
-    return crypto.randomBytes(32).toString('hex');
-}
-
-module.exports = {
-    encrypt,
-    decrypt,
-    generateKey
-};
-
+module.exports = { encrypt, decrypt };

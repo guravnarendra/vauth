@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2FA Verification - VAUTH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF',
+                        accent: '#F59E0B',
+                        dark: '#1F2937',
+                        light: '#F9FAFB'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .token-input {
+            transition: all 0.3s ease;
+            letter-spacing: 0.5em;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+        .token-input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.25);
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-primary">VAUTH</h1>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-primary transition duration-300">Home</a>
+                    <a href="/login" class="text-gray-600 hover:text-primary transition duration-300">Back to Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <!-- Header -->
+            <div class="text-center">
+                <div class="mx-auto h-12 w-12 bg-accent rounded-full flex items-center justify-center">
+                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                    Two-Factor Authentication
+                </h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    Enter the 6-character token from your VAUTH device
+                </p>
+                <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-sm text-blue-700">
+                        <span class="font-medium">Device ID:</span> 
+                        <span id="deviceIdDisplay" class="font-mono">Loading...</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2FA Form -->
+            <div class="bg-white py-8 px-6 shadow-xl rounded-xl">
+                <form id="tokenForm" class="space-y-6">
+                    <!-- Token Field -->
+                    <div>
+                        <label for="token" class="block text-sm font-medium text-gray-700 mb-2">
+                            VAUTH Token
+                        </label>
+                        <input 
+                            id="token" 
+                            name="token" 
+                            type="text" 
+                            maxlength="6"
+                            required 
+                            class="token-input appearance-none relative block w-full px-3 py-4 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-2xl font-bold"
+                            placeholder="000000"
+                            autocomplete="off"
+                        >
+                        <p class="mt-2 text-xs text-gray-500">
+                            Enter the 6-character code displayed on your VAUTH device
+                        </p>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                        <div class="flex">
+                            <svg class="h-5 w-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span id="errorText"></span>
+                        </div>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="hidden bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                        <div class="flex">
+                            <svg class="h-5 w-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Token verified successfully! Redirecting...</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div>
+                        <button 
+                            type="submit" 
+                            id="verifyButton"
+                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-accent hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent transition duration-300"
+                        >
+                            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                                <svg class="h-5 w-5 text-yellow-300 group-hover:text-yellow-200" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </span>
+                            <span id="verifyButtonText">Verify Token</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Additional Info -->
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Having trouble? 
+                        <a href="/login" class="font-medium text-primary hover:text-secondary transition duration-300">
+                            Go back to login
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Device Info -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    <div class="text-sm text-yellow-700">
+                        <p class="font-medium">Token Expiry Notice</p>
+                        <p class="mt-1">VAUTH tokens expire after 5 minutes. Generate a new token if yours has expired.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if we have device ID from login
+        window.addEventListener('load', function() {
+            const deviceId = sessionStorage.getItem('vauth_device_id');
+            const username = sessionStorage.getItem('username');
+            
+            if (!deviceId || !username) {
+                // Redirect to login if no device ID
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Display device ID
+            document.getElementById('deviceIdDisplay').textContent = deviceId;
+        });
+
+        // Auto-format token input
+        document.getElementById('token').addEventListener('input', function(e) {
+            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (value.length > 6) {
+                value = value.substring(0, 6);
+            }
+            e.target.value = value;
+            
+            // Auto-submit when 6 characters entered
+            if (value.length === 6) {
+                setTimeout(() => {
+                    document.getElementById('tokenForm').dispatchEvent(new Event('submit'));
+                }, 500);
+            }
+        });
+
+        document.getElementById('tokenForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const token = document.getElementById('token').value;
+            const deviceId = sessionStorage.getItem('vauth_device_id');
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            const errorText = document.getElementById('errorText');
+            const verifyButton = document.getElementById('verifyButton');
+            const verifyButtonText = document.getElementById('verifyButtonText');
+            
+            if (!deviceId) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (token.length !== 6) {
+                errorText.textContent = 'Token must be 6 characters';
+                errorDiv.classList.remove('hidden');
+                successDiv.classList.add('hidden');
+                return;
+            }
+            
+            // Hide previous messages
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            
+            // Show loading state
+            verifyButton.disabled = true;
+            verifyButtonText.textContent = 'Verifying...';
+            verifyButton.classList.add('opacity-75');
+            
+            try {
+                const response = await fetch('/api/user/verify-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        device_id: deviceId, 
+                        token: token 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    successDiv.classList.remove('hidden');
+                    
+                    // Clear session storage
+                    sessionStorage.removeItem('vauth_device_id');
+                    sessionStorage.removeItem('username');
+                    
+                    // Redirect to dashboard after delay
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 2000);
+                } else {
+                    // Show error
+                    errorText.textContent = data.message || 'Token verification failed';
+                    errorDiv.classList.remove('hidden');
+                    
+                    // Clear token field
+                    document.getElementById('token').value = '';
+                    document.getElementById('token').focus();
+                }
+            } catch (error) {
+                console.error('Token verification error:', error);
+                errorText.textContent = 'Network error. Please try again.';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                // Reset button state
+                verifyButton.disabled = false;
+                verifyButtonText.textContent = 'Verify Token';
+                verifyButton.classList.remove('opacity-75');
+            }
+        });
+        
+        // Focus token input on load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.getElementById('token').focus();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
+

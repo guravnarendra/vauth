@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - VAUTH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF',
+                        accent: '#F59E0B',
+                        dark: '#1F2937',
+                        light: '#F9FAFB'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .countdown-circle {
+            transition: stroke-dasharray 1s linear;
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-primary">VAUTH</h1>
+                    </div>
+                    <div class="ml-6">
+                        <span class="text-gray-600">Welcome, <span id="usernameDisplay" class="font-semibold text-gray-900">Loading...</span></span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Session Timer -->
+                    <div class="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
+                        <svg class="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span id="sessionTimer" class="text-sm font-medium text-gray-700">--:--</span>
+                    </div>
+                    
+                    <!-- Logout Button -->
+                    <button 
+                        id="logoutButton"
+                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-300"
+                    >
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Welcome Section -->
+        <div class="px-4 py-6 sm:px-0">
+            <div class="bg-white overflow-hidden shadow-xl rounded-lg">
+                <div class="gradient-bg px-6 py-8 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold">Welcome to Your Dashboard</h1>
+                            <p class="mt-2 text-lg opacity-90">You have successfully authenticated with VAUTH</p>
+                        </div>
+                        <div class="hidden md:block">
+                            <svg class="h-16 w-16 opacity-75" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Session Info -->
+                <div class="px-6 py-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <svg class="h-8 w-8 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-green-800">Authentication Status</p>
+                                    <p class="text-lg font-bold text-green-900">Verified</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <svg class="h-8 w-8 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-blue-800">Session Time Remaining</p>
+                                    <p id="timeRemainingDisplay" class="text-lg font-bold text-blue-900">--:--</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <svg class="h-8 w-8 text-purple-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clip-rule="evenodd"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-purple-800">Security Level</p>
+                                    <p class="text-lg font-bold text-purple-900">High</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-Logout Warning -->
+        <div id="logoutWarning" class="hidden px-4 py-6 sm:px-0">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="h-8 w-8 text-yellow-500 mr-3 pulse-animation" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div>
+                            <p class="text-lg font-medium text-yellow-800">Session Expiring Soon</p>
+                            <p class="text-sm text-yellow-700">Your session will automatically expire in <span id="warningTimer" class="font-bold">--</span> seconds.</p>
+                        </div>
+                    </div>
+                    <button 
+                        id="extendSessionButton"
+                        class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition duration-300"
+                    >
+                        Stay Logged In
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="px-4 py-6 sm:px-0">
+            <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Account Features</h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                            <div class="flex items-center mb-3">
+                                <svg class="h-6 w-6 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium text-gray-900">Secure Authentication</h3>
+                            </div>
+                            <p class="text-gray-600">Your account is protected with two-factor authentication using VAUTH device tokens.</p>
+                        </div>
+                        
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                            <div class="flex items-center mb-3">
+                                <svg class="h-6 w-6 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium text-gray-900">Encrypted Data</h3>
+                            </div>
+                            <p class="text-gray-600">All your personal information is encrypted using AES-256-GCM encryption.</p>
+                        </div>
+                        
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                            <div class="flex items-center mb-3">
+                                <svg class="h-6 w-6 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium text-gray-900">Session Management</h3>
+                            </div>
+                            <p class="text-gray-600">Automatic session expiry and real-time monitoring for enhanced security.</p>
+                        </div>
+                        
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                            <div class="flex items-center mb-3">
+                                <svg class="h-6 w-6 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium text-gray-900">Real-time Monitoring</h3>
+                            </div>
+                            <p class="text-gray-600">Your account activity is monitored in real-time for suspicious behavior.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionTimer = null;
+        let timeRemaining = 0;
+        let warningShown = false;
+
+        // Check authentication on load
+        window.addEventListener('load', async function() {
+            await checkSession();
+            startSessionTimer();
+        });
+
+        async function checkSession() {
+            try {
+                const response = await fetch('/api/user/session-status');
+                const data = await response.json();
+                
+                if (!data.success || !data.authenticated) {
+                    // Redirect to login if not authenticated
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                // Update UI with user info
+                document.getElementById('usernameDisplay').textContent = data.username;
+                timeRemaining = data.timeRemaining;
+                updateTimerDisplay();
+                
+            } catch (error) {
+                console.error('Session check error:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        function startSessionTimer() {
+            sessionTimer = setInterval(async () => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                // Show warning when 2 minutes remaining
+                if (timeRemaining <= 120 && !warningShown) {
+                    showLogoutWarning();
+                    warningShown = true;
+                }
+                
+                // Auto-logout when time expires
+                if (timeRemaining <= 0) {
+                    await logout();
+                }
+                
+                // Update warning timer
+                if (warningShown) {
+                    document.getElementById('warningTimer').textContent = timeRemaining;
+                }
+                
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('sessionTimer').textContent = timeString;
+            document.getElementById('timeRemainingDisplay').textContent = timeString;
+            
+            // Change color based on time remaining
+            const timerElement = document.getElementById('sessionTimer');
+            if (timeRemaining <= 120) {
+                timerElement.classList.add('text-red-600');
+                timerElement.classList.remove('text-gray-700');
+            } else if (timeRemaining <= 300) {
+                timerElement.classList.add('text-yellow-600');
+                timerElement.classList.remove('text-gray-700');
+            }
+        }
+
+        function showLogoutWarning() {
+            document.getElementById('logoutWarning').classList.remove('hidden');
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/user/logout', {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                window.location.href = '/login';
+            }
+        }
+
+        // Logout button handler
+        document.getElementById('logoutButton').addEventListener('click', logout);
+
+        // Extend session button handler
+        document.getElementById('extendSessionButton').addEventListener('click', async function() {
+            // In a real implementation, this would extend the session
+            // For now, we'll just refresh the session status
+            await checkSession();
+            document.getElementById('logoutWarning').classList.add('hidden');
+            warningShown = false;
+        });
+
+        // Refresh session status every 30 seconds
+        setInterval(checkSession, 30000);
+    </script>
+</body>
+</html>
+

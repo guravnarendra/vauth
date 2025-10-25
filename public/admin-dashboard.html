@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAUTH - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#7C3AED',
+                        secondary: '#4F46E5',
+                        accent: '#F59E0B',
+                        dark: '#1F2937',
+                        light: '#F9FAFB',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        error: '#EF4444',
+                        info: '#3B82F6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(124, 58, 237, 0.15);
+            border-color: #7c3aed;
+        }
+        
+        .sidebar-item {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+        }
+        
+        .sidebar-item:hover {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            color: white;
+            transform: translateX(8px);
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            color: white;
+            box-shadow: 0 8px 20px -4px rgba(124, 58, 237, 0.3);
+        }
+        
+        .live-map {
+            background: radial-gradient(circle at 50% 50%, #f8faff 0%, #ffffff 100%);
+            min-height: 300px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+        
+        .floating-icon {
+            position: absolute;
+            transition: all 0.5s ease;
+        }
+        
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            transform-origin: left center;
+            transition: all 0.5s ease;
+        }
+        
+        /* Mobile Bottom Navigation */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #f1f5f9;
+            z-index: 50;
+            padding: 12px 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .mobile-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px;
+            text-decoration: none;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin: 0 2px;
+        }
+        
+        .mobile-nav-item.active {
+            color: #7c3aed;
+            background: rgba(124, 58, 237, 0.08);
+        }
+        
+        .mobile-nav-item svg {
+            width: 22px;
+            height: 22px;
+            margin-bottom: 4px;
+        }
+        
+        /* Mobile Table Cards */
+        .mobile-table-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #f1f5f9;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-table-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .mobile-table-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f8fafc;
+        }
+        
+        .mobile-table-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .mobile-table-label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
+        }
+        
+        .mobile-table-value {
+            color: #6b7280;
+            font-size: 14px;
+            text-align: right;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: #047857;
+        }
+        
+        .status-expired {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+        
+        .status-used {
+            background: rgba(59, 130, 246, 0.1);
+            color: #1d4ed8;
+        }
+        
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+        
+        .countdown-expiring {
+            color: #dc2626;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .mobile-bottom-nav {
+                display: flex;
+            }
+            
+            .desktop-sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                padding-bottom: 90px;
+            }
+            
+            .desktop-table {
+                display: none;
+            }
+            
+            .mobile-table {
+                display: block;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .mobile-table {
+                display: none;
+            }
+            
+            .desktop-table {
+                display: table;
+            }
+            
+            .mobile-bottom-nav {
+                display: none;
+            }
+            
+            .desktop-sidebar {
+                display: block;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7c3aed;
+        }
+        
+        /* Animation for stats */
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .count-animation {
+            animation: countUp 0.6s ease-out;
+        }
+        
+        /* Loading shimmer */
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Top Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <h1 class="text-xl font-bold gradient-text">VAUTH Admin</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-2 text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-full">
+                        <div class="w-2 h-2 bg-success rounded-full"></div>
+                        <span>System Online</span>
+                    </div>
+                    <div class="text-sm text-gray-600 hidden md:block">
+                        Welcome, <span class="font-semibold text-gray-900">Admin</span>
+                    </div>
+                    <button 
+                        id="logoutButton"
+                        class="bg-gradient-to-r from-primary to-secondary hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl transition-all duration-300 text-sm font-medium shadow-md hover:shadow-lg"
+                    >
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex max-w-7xl mx-auto">
+        <!-- Desktop Sidebar -->
+        <div class="desktop-sidebar w-64 bg-white min-h-screen border-r border-gray-100 py-6">
+            <div class="px-6">
+                <nav class="space-y-2">
+                    <a href="#" class="sidebar-item active flex items-center px-4 py-3 text-sm font-medium group" data-section="dashboard">
+                        <svg class="h-5 w-5 mr-3 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-gray-700 group" data-section="add-user">
+                        <svg class="h-5 w-5 mr-3 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                        Add New User
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-gray-700 group" data-section="users">
+                        <svg class="h-5 w-5 mr-3 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                        User Database
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-gray-700 group" data-section="tokens">
+                        <svg class="h-5 w-5 mr-3 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                        </svg>
+                        Token Database
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-gray-700 group" data-section="sessions">
+                        <svg class="h-5 w-5 mr-3 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Session Monitor
+                    </a>
+                    <a href="#" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-gray-700 group" data-section="virtual-device">
+                        <svg class="h-5 w-5 mr-3 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        Virtual Device
+                    </a>
+                </nav>
+                
+                <!-- System Status -->
+                <div class="mt-8 p-4 bg-gradient-to-r from-primary to-secondary rounded-xl text-white">
+                    <h3 class="font-semibold text-sm mb-2">System Status</h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span>API Server</span>
+                            <span class="font-semibold">Online</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Database</span>
+                            <span class="font-semibold">Healthy</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Last Backup</span>
+                            <span class="font-semibold">2h ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content flex-1 p-4 md:p-6 lg:p-8">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section">
+                <!-- Header -->
+                <div class="mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Dashboard Overview</h2>
+                    <p class="text-gray-600 mt-2">Welcome back! Here's what's happening with your system.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card-hover bg-white p-6 rounded-2xl shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Total Users</p>
+                                <p id="totalUsers" class="text-2xl md:text-3xl font-bold text-gray-900 count-animation">--</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-blue-50">
+                                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-500">
+                            <span>Registered users</span>
+                        </div>
+                    </div>
+
+                    <div class="card-hover bg-white p-6 rounded-2xl shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Active Tokens</p>
+                                <p id="activeTokens" class="text-2xl md:text-3xl font-bold text-gray-900 count-animation">--</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-green-50">
+                                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-500">
+                            <span>Currently active</span>
+                        </div>
+                    </div>
+
+                    <div class="card-hover bg-white p-6 rounded-2xl shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Active Sessions</p>
+                                <p id="activeSessions" class="text-2xl md:text-3xl font-bold text-gray-900 count-animation">--</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-purple-50">
+                                <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-500">
+                            <span>Live sessions</span>
+                        </div>
+                    </div>
+
+                    <div class="card-hover bg-white p-6 rounded-2xl shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600 mb-1">Expired Tokens</p>
+                                <p id="expiredTokens" class="text-2xl md:text-3xl font-bold text-gray-900 count-animation">--</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-red-50">
+                                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-500">
+                            <span>Auto-cleanup enabled</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Live Request Map -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">Live Request Map</h3>
+                            <div class="flex space-x-4">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600">Valid</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600">Pending</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                    <span class="text-sm text-gray-600">Invalid</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="liveMap" class="live-map border-2 border-dashed border-gray-200">
+                            <!-- Dynamic content will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-2xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                            <button class="text-sm text-primary font-medium">View All</button>
+                        </div>
+                        <div id="recentActivity" class="space-y-4 max-h-96 overflow-y-auto">
+                            <div class="text-center py-8">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-500">No recent activity</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add User Section -->
+            <div id="add-user-section" class="section hidden">
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">Add New User</h2>
+                        <p class="text-gray-600 mt-2">Create a new user account with VAUTH authentication.</p>
+                    </div>
+                    
+                    <form id="addUserForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                <input type="text" name="name" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200" placeholder="Enter full name">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                <input type="email" name="email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200" placeholder="Enter email address">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Mobile Number</label>
+                                <input type="tel" name="mobile" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200" placeholder="Enter mobile number">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Operating Country</label>
+                                <input type="text" name="operating_country" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200" placeholder="Enter country">
+                            </div>
+                        </div>
+                        <button type="submit" class="bg-gradient-to-r from-primary to-secondary hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg transform hover:scale-105">
+                            Create User Account
+                        </button>
+                    </form>
+                    
+                    <!-- Generated Credentials Display -->
+                    <div id="credentialsDisplay" class="hidden mt-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <h4 class="text-lg font-semibold text-green-800">User Created Successfully!</h4>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between items-center p-3 bg-white rounded-lg">
+                                <span class="font-medium text-gray-700">Username:</span>
+                                <span id="genUsername" class="font-mono text-primary font-semibold"></span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white rounded-lg">
+                                <span class="font-medium text-gray-700">Password:</span>
+                                <span id="genPassword" class="font-mono text-primary font-semibold"></span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white rounded-lg">
+                                <span class="font-medium text-gray-700">VAUTH Device ID:</span>
+                                <span id="genDeviceId" class="font-mono text-primary font-semibold"></span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-700 mt-4 text-center">Please save these credentials securely. They will not be shown again.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div id="users-section" class="section hidden">
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">User Database</h2>
+                            <p class="text-gray-600 mt-2">Manage all user accounts and their authentication details.</p>
+                        </div>
+                        <button id="refreshUsers" class="bg-primary hover:bg-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-medium mt-4 md:mt-0 shadow-md hover:shadow-lg">
+                            Refresh Data
+                        </button>
+                    </div>
+                    
+                    <!-- Desktop Table -->
+                    <div class="desktop-table overflow-hidden rounded-xl border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Username</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">VAUTH Device ID</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                        <div class="flex justify-center">
+                                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Mobile Table -->
+                    <div id="usersMobileTable" class="mobile-table">
+                        <!-- Dynamic content will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tokens Section -->
+            <div id="tokens-section" class="section hidden">
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Token Database</h2>
+                            <p class="text-gray-600 mt-2">Monitor and manage authentication tokens.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+                            <button id="toggleAutoDelete" class="bg-warning hover:bg-amber-600 text-white px-6 py-3 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg">
+                                Auto-Delete: <span id="autoDeleteStatus">OFF</span>
+                            </button>
+                            <button id="refreshTokens" class="bg-primary hover:bg-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg">
+                                Refresh Tokens
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Desktop Table -->
+                    <div class="desktop-table overflow-hidden rounded-xl border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Device ID</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time Remaining</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tokensTableBody" class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                        <div class="flex justify-center">
+                                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Mobile Table -->
+                    <div id="tokensMobileTable" class="mobile-table">
+                        <!-- Dynamic content will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sessions Section -->
+            <div id="sessions-section" class="section hidden">
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Active Sessions</h2>
+                            <p class="text-gray-600 mt-2">Monitor and manage current user sessions.</p>
+                        </div>
+                        <button id="refreshSessions" class="bg-primary hover:bg-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-medium mt-4 md:mt-0 shadow-md hover:shadow-lg">
+                            Refresh Sessions
+                        </button>
+                    </div>
+                    
+                    <!-- Desktop Table -->
+                    <div class="desktop-table overflow-hidden rounded-xl border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Username</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Device ID</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">IP Address</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Started</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time Left</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessionsTableBody" class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <div class="flex justify-center">
+                                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Mobile Table -->
+                    <div id="sessionsMobileTable" class="mobile-table">
+                        <!-- Dynamic content will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Virtual Device Section -->
+            <div id="virtual-device-section" class="section hidden">
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">Virtual Device Token Generator</h2>
+                        <p class="text-gray-600 mt-2">Generate authentication tokens for virtual devices.</p>
+                    </div>
+                    
+                    <form id="virtualTokenForm" class="space-y-6 max-w-2xl">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">VAUTH Device ID</label>
+                            <input type="text" name="device_id" required placeholder="Enter VAUTH Device ID" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200">
+                        </div>
+                        <button type="submit" class="bg-gradient-to-r from-primary to-secondary hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg transform hover:scale-105">
+                            Generate Token
+                        </button>
+                    </form>
+                    
+                    <!-- Generated Token Display -->
+                    <div id="tokenDisplay" class="hidden mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                            <h4 class="text-lg font-semibold text-blue-800">Token Generated Successfully!</h4>
+                        </div>
+                        <div class="text-center p-6 bg-white rounded-xl border border-blue-100">
+                            <p class="text-xl md:text-3xl font-mono font-bold text-primary mb-3" id="generatedToken">------</p>
+                            <p class="text-sm text-blue-700">Expires: <span id="tokenExpiry" class="font-semibold">--</span></p>
+                        </div>
+                        <p class="text-xs text-blue-700 mt-4 text-center">This token will expire automatically based on your security settings.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav">
+        <a href="#" class="mobile-nav-item active" data-section="dashboard">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            Dashboard
+        </a>
+        <a href="#" class="mobile-nav-item" data-section="add-user">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+            </svg>
+            Add User
+        </a>
+        <a href="#" class="mobile-nav-item" data-section="users">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+            </svg>
+            Users
+        </a>
+        <a href="#" class="mobile-nav-item" data-section="tokens">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+            </svg>
+            Tokens
+        </a>
+        <a href="#" class="mobile-nav-item" data-section="sessions">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            Sessions
+        </a>
+        <a href="#" class="mobile-nav-item" data-section="virtual-device">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+            Virtual
+        </a>
+    </div>
+
+    <!-- Security Alert Modal -->
+    <div id="alertModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-96 shadow-lg rounded-2xl bg-white">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2">Security Alert</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p id="alertMessage" class="text-sm text-gray-500"></p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="closeAlert" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-xl w-full shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 transition-all duration-200">
+                        Close Alert
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin-dashboard.js"></script>
+</body>
+</html>

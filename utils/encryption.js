@@ -1,16 +1,15 @@
 // utils/encryption.js
 const crypto = require('crypto');
 
-// Use a strong algorithm and a 32-byte key
 const algorithm = 'aes-256-cbc';
-const secretKey = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex').slice(0, 32);
+const rawKey = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+const secretKey = crypto.createHash('sha256').update(rawKey).digest();
 const ivLength = 16;
 
-// Encrypt function
 function encrypt(text) {
   try {
     const iv = crypto.randomBytes(ivLength);
-    const cipher = crypto.createCipheriv(algorithm, Buffer.from(secretKey), iv);
+    const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return iv.toString('hex') + ':' + encrypted;
@@ -20,12 +19,11 @@ function encrypt(text) {
   }
 }
 
-// Decrypt function
 function decrypt(text) {
   try {
     const [ivHex, encryptedData] = text.split(':');
     const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipheriv(algorithm, Buffer.from(secretKey), iv);
+    const decipher = crypto.createDecipheriv(algorithm, secretKey, iv);
     let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;

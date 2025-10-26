@@ -196,22 +196,24 @@ async function loadUsers() {
             if (data.users.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="4" class="px-6 py-12 text-center text-gray-500">
                             <div class="flex flex-col items-center">
-                                <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                                 </svg>
-                                <p>No users found</p>
+                                <p class="text-gray-500 text-lg">No users found</p>
+                                <p class="text-gray-400 text-sm mt-1">Users will appear here once created</p>
                             </div>
                         </td>
                     </tr>
                 `;
                 mobileTable.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="text-center py-12 text-gray-500">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                         </svg>
-                        <p>No users found</p>
+                        <p class="text-gray-500 text-lg">No users found</p>
+                        <p class="text-gray-400 text-sm mt-1">Users will appear here once created</p>
                     </div>
                 `;
                 return;
@@ -220,19 +222,26 @@ async function loadUsers() {
             // Desktop table
             data.users.forEach(user => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50 transition-colors duration-200';
+                row.className = 'hover:bg-gray-50 transition-all duration-200';
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-6 py-4">
                         <div class="flex items-center">
-                            <div class="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center text-white text-sm font-semibold mr-3">
+                            <div class="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold text-sm mr-4">
                                 ${user.name.charAt(0).toUpperCase()}
                             </div>
-                            <div class="text-sm font-medium text-gray-900">${user.name}</div>
+                            <div>
+                                <div class="text-sm font-semibold text-gray-900">${user.name}</div>
+                                <div class="text-xs text-gray-500">${user.email || 'No email'}</div>
+                            </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${user.username}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">${user.vauth_device_ID}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(user.created_at)}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900 font-medium">${user.username}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 font-mono">
+                            ${user.vauth_device_ID}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${formatDate(user.created_at)}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -243,21 +252,24 @@ async function loadUsers() {
                 card.className = 'mobile-table-card';
                 card.innerHTML = `
                     <div class="flex items-center mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold mr-3">
+                        <div class="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold text-lg mr-4">
                             ${user.name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-900">${user.name}</h3>
-                            <p class="text-sm text-gray-600">${user.username}</p>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900 text-lg">${user.name}</h3>
+                            <p class="text-gray-600 text-sm">${user.username}</p>
+                            ${user.email ? `<p class="text-gray-500 text-xs mt-1">${user.email}</p>` : ''}
                         </div>
                     </div>
-                    <div class="mobile-table-row">
-                        <span class="mobile-table-label">Device ID</span>
-                        <span class="mobile-table-value font-mono">${user.vauth_device_ID}</span>
-                    </div>
-                    <div class="mobile-table-row">
-                        <span class="mobile-table-label">Created</span>
-                        <span class="mobile-table-value">${formatDate(user.created_at)}</span>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">Device ID</span>
+                            <span class="text-sm font-mono text-primary font-semibold">${user.vauth_device_ID}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">Created</span>
+                            <span class="text-sm text-gray-600">${formatDate(user.created_at)}</span>
+                        </div>
                     </div>
                 `;
                 mobileTable.appendChild(card);
@@ -292,22 +304,24 @@ async function loadTokens() {
             if (data.tokens.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
                             <div class="flex flex-col items-center">
-                                <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                                 </svg>
-                                <p>No tokens found</p>
+                                <p class="text-gray-500 text-lg">No tokens found</p>
+                                <p class="text-gray-400 text-sm mt-1">Tokens will appear here once generated</p>
                             </div>
                         </td>
                     </tr>
                 `;
                 mobileTable.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="text-center py-12 text-gray-500">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                         </svg>
-                        <p>No tokens found</p>
+                        <p class="text-gray-500 text-lg">No tokens found</p>
+                        <p class="text-gray-400 text-sm mt-1">Tokens will appear here once generated</p>
                     </div>
                 `;
                 return;
@@ -316,23 +330,27 @@ async function loadTokens() {
             // Desktop table
             data.tokens.forEach(token => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50 transition-colors duration-200';
+                row.className = 'hover:bg-gray-50 transition-all duration-200';
                 const statusClass = getStatusClass(token.status);
                 const timeRemaining = token.status === 'ACTIVE' ? formatTime(token.timeRemaining) : '--';
                 
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">${token.device_id}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-6 py-4">
+                        <span class="font-mono text-sm font-semibold text-gray-900">${token.device_id}</span>
+                    </td>
+                    <td class="px-6 py-4">
                         <span class="status-badge ${statusClass}">
                             ${token.status}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        <span id="token-time-${token._id}">${timeRemaining}</span>
+                    <td class="px-6 py-4">
+                        <span id="token-time-${token._id}" class="text-sm font-medium ${token.status === 'ACTIVE' && token.timeRemaining < 60 ? 'text-red-600' : 'text-gray-700'}">
+                            ${timeRemaining}
+                        </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(token.created_at)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button onclick="deleteToken('${token._id}')" class="text-red-600 hover:text-red-800 transition-colors duration-200 font-medium">
+                    <td class="px-6 py-4 text-sm text-gray-500">${formatDate(token.created_at)}</td>
+                    <td class="px-6 py-4">
+                        <button onclick="deleteToken('${token._id}')" class="text-red-600 hover:text-red-800 transition-colors duration-200 font-medium text-sm bg-red-50 hover:bg-red-100 px-3 py-1 rounded-lg">
                             Delete
                         </button>
                     </td>
@@ -345,28 +363,45 @@ async function loadTokens() {
                 }
             });
             
-            // Mobile cards
+            // Mobile cards - Enhanced design
             data.tokens.forEach(token => {
                 const card = document.createElement('div');
                 card.className = 'mobile-table-card';
                 const timeRemaining = token.status === 'ACTIVE' ? formatTime(token.timeRemaining) : '--';
                 const statusBadge = getMobileStatusBadge(token.status);
+                const isExpiring = token.status === 'ACTIVE' && token.timeRemaining < 60;
                 
                 card.innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="font-mono text-sm text-gray-900">${token.device_id}</span>
-                        ${statusBadge}
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                </svg>
+                                <span class="font-mono text-sm font-semibold text-gray-900">${token.device_id}</span>
+                            </div>
+                            ${statusBadge}
+                        </div>
                     </div>
-                    <div class="mobile-table-row">
-                        <span class="mobile-table-label">Time Remaining</span>
-                        <span class="mobile-table-value" id="mobile-token-time-${token._id}">${timeRemaining}</span>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-xs text-gray-500 mb-1">Time Remaining</div>
+                            <div id="mobile-token-time-${token._id}" class="text-sm font-semibold ${isExpiring ? 'text-red-600' : 'text-gray-900'}">
+                                ${timeRemaining}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-xs text-gray-500 mb-1">Created</div>
+                            <div class="text-sm font-semibold text-gray-900">${formatDateShort(token.created_at)}</div>
+                        </div>
                     </div>
-                    <div class="mobile-table-row">
-                        <span class="mobile-table-label">Created</span>
-                        <span class="mobile-table-value">${formatDate(token.created_at)}</span>
-                    </div>
-                    <div class="mt-4 flex justify-end">
-                        <button onclick="deleteToken('${token._id}')" class="text-red-600 hover:text-red-800 transition-colors duration-200 font-medium text-sm">
+                    
+                    <div class="flex justify-end">
+                        <button onclick="deleteToken('${token._id}')" class="text-red-600 hover:text-red-800 transition-colors duration-200 font-medium text-sm bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
                             Delete Token
                         </button>
                     </div>
@@ -400,7 +435,7 @@ function startTokenCountdown(tokenId, initialSeconds) {
         
         if (seconds <= 0) {
             timeElement.textContent = '00:00';
-            timeElement.className = 'countdown-expiring';
+            timeElement.className = 'text-red-600 font-semibold';
             clearInterval(interval);
             tokenCountdownIntervals.delete(tokenId);
             
@@ -411,7 +446,7 @@ function startTokenCountdown(tokenId, initialSeconds) {
         
         // Add warning class when less than 60 seconds
         if (seconds < 60) {
-            timeElement.className = 'countdown-expiring';
+            timeElement.className = 'text-red-600 font-semibold';
         }
         
         timeElement.textContent = formatTime(seconds);
@@ -430,14 +465,14 @@ function startMobileTokenCountdown(tokenId, initialSeconds) {
         
         if (seconds <= 0) {
             timeElement.textContent = '00:00';
-            timeElement.className = 'countdown-expiring';
+            timeElement.className = 'text-red-600 font-semibold';
             clearInterval(interval);
             return;
         }
         
         // Add warning class when less than 60 seconds
         if (seconds < 60) {
-            timeElement.className = 'countdown-expiring';
+            timeElement.className = 'text-red-600 font-semibold';
         }
         
         timeElement.textContent = formatTime(seconds);
@@ -486,22 +521,24 @@ async function loadSessions() {
             if (data.sessions.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                             <div class="flex flex-col items-center">
-                                <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                 </svg>
-                                <p>No active sessions</p>
+                                <p class="text-gray-500 text-lg">No active sessions</p>
+                                <p class="text-gray-400 text-sm mt-1">Active sessions will appear here</p>
                             </div>
                         </td>
                     </tr>
                 `;
                 mobileTable.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="text-center py-12 text-gray-500">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
-                        <p>No active sessions</p>
+                        <p class="text-gray-500 text-lg">No active sessions</p>
+                        <p class="text-gray-400 text-sm mt-1">Active sessions will appear here</p>
                     </div>
                 `;
                 return;
@@ -510,17 +547,29 @@ async function loadSessions() {
             // Desktop table
             data.sessions.forEach(session => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50 transition-colors duration-200';
+                row.className = 'hover:bg-gray-50 transition-all duration-200';
+                const isExpiring = session.timeRemaining < 300; // 5 minutes
+                
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${session.username}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">${session.device_id}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${session.ip}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(session.started_at)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        <span id="session-time-${session._id}">${formatTime(session.timeRemaining)}</span>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-semibold text-gray-900">${session.username}</div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button onclick="forceLogout('${session._id}')" class="text-red-600 hover:text-red-800 transition-colors duration-200 font-medium">
+                    <td class="px-6 py-4">
+                        <span class="font-mono text-sm text-gray-700">${session.device_id}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            ${session.ip}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${formatDate(session.started_at)}</td>
+                    <td class="px-6 py-4">
+                        <span id="session-time-${session._id}" class="text-sm font-medium ${isExpiring ? 'text-red-600' : 'text-gray-700'}">
+                            ${formatTime(session.timeRemaining)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick="forceLogout('${session._id}')" class="text-red-600 hover:text-red-800 transition-colors duration-200 font-medium text-sm bg-red-50 hover:bg-red-100 px-3 py-1 rounded-lg">
                             Force Logout
                         </button>
                     </td>
@@ -537,25 +586,43 @@ async function loadSessions() {
             data.sessions.forEach(session => {
                 const card = document.createElement('div');
                 card.className = 'mobile-table-card';
+                const isExpiring = session.timeRemaining < 300;
+                
                 card.innerHTML = `
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-semibold text-gray-900">${session.username}</h3>
-                        <span class="text-xs text-gray-500">${session.ip}</span>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900 text-lg mb-1">${session.username}</h3>
+                            <div class="flex items-center gap-2 text-sm text-gray-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                </svg>
+                                <span>${session.ip}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mobile-table-row">
-                        <span class="mobile-table-label">Device ID</span>
-                        <span class="mobile-table-value font-mono">${session.device_id}</span>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 mb-1">Device ID</div>
+                            <div class="text-sm font-mono text-gray-900 font-semibold">${session.device_id}</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 mb-1">Time Left</div>
+                            <div id="mobile-session-time-${session._id}" class="text-sm font-semibold ${isExpiring ? 'text-red-600' : 'text-gray-900'}">
+                                ${formatTime(session.timeRemaining)}
+                            </div>
+                        </div>
                     </div>
-                    <div class="mobile-table-row">
-                        <span class="mobile-table-label">Started</span>
-                        <span class="mobile-table-value">${formatDate(session.started_at)}</span>
+                    
+                    <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                        <span>Started: ${formatDateShort(session.started_at)}</span>
                     </div>
-                    <div class="mobile-table-row">
-                        <span class="mobile-table-label">Time Left</span>
-                        <span class="mobile-table-value" id="mobile-session-time-${session._id}">${formatTime(session.timeRemaining)}</span>
-                    </div>
-                    <div class="mt-4 flex justify-end">
-                        <button onclick="forceLogout('${session._id}')" class="text-red-600 hover:text-red-800 transition-colors duration-200 font-medium text-sm">
+                    
+                    <div class="flex justify-end">
+                        <button onclick="forceLogout('${session._id}')" class="text-red-600 hover:text-red-800 transition-colors duration-200 font-medium text-sm bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
                             Force Logout
                         </button>
                     </div>
@@ -589,15 +656,15 @@ function startSessionCountdown(sessionId, initialSeconds) {
         
         if (seconds <= 0) {
             timeElement.textContent = '00:00';
-            timeElement.className = 'countdown-expiring';
+            timeElement.className = 'text-red-600 font-semibold';
             clearInterval(interval);
             sessionCountdownIntervals.delete(sessionId);
             return;
         }
         
-        // Add warning class when less than 60 seconds
-        if (seconds < 60) {
-            timeElement.className = 'countdown-expiring';
+        // Add warning class when less than 5 minutes
+        if (seconds < 300) {
+            timeElement.className = 'text-red-600 font-semibold';
         }
         
         timeElement.textContent = formatTime(seconds);
@@ -616,14 +683,14 @@ function startMobileSessionCountdown(sessionId, initialSeconds) {
         
         if (seconds <= 0) {
             timeElement.textContent = '00:00';
-            timeElement.className = 'countdown-expiring';
+            timeElement.className = 'text-red-600 font-semibold';
             clearInterval(interval);
             return;
         }
         
-        // Add warning class when less than 60 seconds
-        if (seconds < 60) {
-            timeElement.className = 'countdown-expiring';
+        // Add warning class when less than 5 minutes
+        if (seconds < 300) {
+            timeElement.className = 'text-red-600 font-semibold';
         }
         
         timeElement.textContent = formatTime(seconds);
@@ -843,11 +910,11 @@ function updateAutoDeleteStatus() {
     
     const button = document.getElementById('toggleAutoDelete');
     if (autoDeleteEnabled) {
-        button.classList.remove('bg-warning', 'hover:bg-amber-600');
-        button.classList.add('bg-success', 'hover:bg-emerald-600');
+        button.classList.remove('btn-warning');
+        button.classList.add('btn-success');
     } else {
-        button.classList.remove('bg-success', 'hover:bg-emerald-600');
-        button.classList.add('bg-warning', 'hover:bg-amber-600');
+        button.classList.remove('btn-success');
+        button.classList.add('btn-warning');
     }
 }
 
@@ -1001,7 +1068,7 @@ function animateRequestFlow(type, success) {
     
     liveMap.appendChild(sourceIcon);
     liveMap.appendChild(targetIcon);
-    liveTable.appendChild(line);
+    liveMap.appendChild(line);
     
     // Animate the line
     setTimeout(() => {
@@ -1048,6 +1115,15 @@ async function logout() {
 function formatDate(dateString) {
     return new Date(dateString).toLocaleString('en-US', {
         year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatDateShort(dateString) {
+    return new Date(dateString).toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',

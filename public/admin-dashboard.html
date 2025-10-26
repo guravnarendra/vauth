@@ -219,6 +219,118 @@
             50% { opacity: 0.7; }
         }
         
+        /* Enhanced Table Styles */
+        .enhanced-table {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .enhanced-table thead {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+        }
+        
+        .enhanced-table th {
+            color: white;
+            font-weight: 600;
+            padding: 16px 20px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .enhanced-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+        
+        .enhanced-table tbody tr {
+            transition: all 0.2s ease;
+        }
+        
+        .enhanced-table tbody tr:hover {
+            background-color: #fafafa;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .enhanced-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Improved Button Styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f8fafc;
+            color: #374151;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+        }
+        
+        .btn-secondary:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-warning:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .mobile-bottom-nav {
@@ -245,6 +357,16 @@
                 grid-template-columns: repeat(2, 1fr);
                 gap: 12px;
             }
+            
+            .btn-group {
+                flex-direction: column;
+                gap: 12px;
+                width: 100%;
+            }
+            
+            .btn-group button {
+                width: 100%;
+            }
         }
         
         @media (min-width: 769px) {
@@ -253,7 +375,7 @@
             }
             
             .desktop-table {
-                display: table;
+                display: block;
             }
             
             .mobile-bottom-nav {
@@ -262,6 +384,12 @@
             
             .desktop-sidebar {
                 display: block;
+            }
+            
+            .btn-group {
+                display: flex;
+                gap: 12px;
+                align-items: center;
             }
         }
         
@@ -338,7 +466,7 @@
                     </div>
                     <button 
                         id="logoutButton"
-                        class="bg-gradient-to-r from-primary to-secondary hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl transition-all duration-300 text-sm font-medium shadow-md hover:shadow-lg"
+                        class="btn-primary"
                     >
                         Logout
                     </button>
@@ -564,7 +692,7 @@
                                 <input type="text" name="operating_country" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200" placeholder="Enter country">
                             </div>
                         </div>
-                        <button type="submit" class="bg-gradient-to-r from-primary to-secondary hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg transform hover:scale-105">
+                        <button type="submit" class="btn-primary px-8 py-3">
                             Create User Account
                         </button>
                     </form>
@@ -606,23 +734,25 @@
                             <h2 class="text-2xl font-bold text-gray-900">User Database</h2>
                             <p class="text-gray-600 mt-2">Manage all user accounts and their authentication details.</p>
                         </div>
-                        <button id="refreshUsers" class="bg-primary hover:bg-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-medium mt-4 md:mt-0 shadow-md hover:shadow-lg">
-                            Refresh Data
-                        </button>
+                        <div class="btn-group mt-4 md:mt-0">
+                            <button id="refreshUsers" class="btn-primary">
+                                Refresh Data
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Desktop Table -->
-                    <div class="desktop-table overflow-hidden rounded-xl border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                    <div class="desktop-table enhanced-table">
+                        <table class="min-w-full">
+                            <thead>
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Username</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">VAUTH Device ID</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
+                                    <th class="text-left">Name</th>
+                                    <th class="text-left">Username</th>
+                                    <th class="text-left">VAUTH Device ID</th>
+                                    <th class="text-left">Created</th>
                                 </tr>
                             </thead>
-                            <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                            <tbody id="usersTableBody" class="bg-white">
                                 <tr>
                                     <td colspan="4" class="px-6 py-8 text-center text-gray-500">
                                         <div class="flex justify-center">
@@ -649,29 +779,29 @@
                             <h2 class="text-2xl font-bold text-gray-900">Token Database</h2>
                             <p class="text-gray-600 mt-2">Monitor and manage authentication tokens.</p>
                         </div>
-                        <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
-                            <button id="toggleAutoDelete" class="bg-warning hover:bg-amber-600 text-white px-6 py-3 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg">
+                        <div class="btn-group mt-4 md:mt-0">
+                            <button id="toggleAutoDelete" class="btn-warning">
                                 Auto-Delete: <span id="autoDeleteStatus">OFF</span>
                             </button>
-                            <button id="refreshTokens" class="bg-primary hover:bg-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg">
+                            <button id="refreshTokens" class="btn-primary">
                                 Refresh Tokens
                             </button>
                         </div>
                     </div>
                     
                     <!-- Desktop Table -->
-                    <div class="desktop-table overflow-hidden rounded-xl border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                    <div class="desktop-table enhanced-table">
+                        <table class="min-w-full">
+                            <thead>
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Device ID</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time Remaining</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                                    <th class="text-left">Device ID</th>
+                                    <th class="text-left">Status</th>
+                                    <th class="text-left">Time Remaining</th>
+                                    <th class="text-left">Created</th>
+                                    <th class="text-left">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="tokensTableBody" class="bg-white divide-y divide-gray-200">
+                            <tbody id="tokensTableBody" class="bg-white">
                                 <tr>
                                     <td colspan="5" class="px-6 py-8 text-center text-gray-500">
                                         <div class="flex justify-center">
@@ -698,25 +828,27 @@
                             <h2 class="text-2xl font-bold text-gray-900">Active Sessions</h2>
                             <p class="text-gray-600 mt-2">Monitor and manage current user sessions.</p>
                         </div>
-                        <button id="refreshSessions" class="bg-primary hover:bg-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-300 font-medium mt-4 md:mt-0 shadow-md hover:shadow-lg">
-                            Refresh Sessions
-                        </button>
+                        <div class="btn-group mt-4 md:mt-0">
+                            <button id="refreshSessions" class="btn-primary">
+                                Refresh Sessions
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Desktop Table -->
-                    <div class="desktop-table overflow-hidden rounded-xl border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                    <div class="desktop-table enhanced-table">
+                        <table class="min-w-full">
+                            <thead>
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Username</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Device ID</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">IP Address</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Started</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time Left</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                                    <th class="text-left">Username</th>
+                                    <th class="text-left">Device ID</th>
+                                    <th class="text-left">IP Address</th>
+                                    <th class="text-left">Started</th>
+                                    <th class="text-left">Time Left</th>
+                                    <th class="text-left">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="sessionsTableBody" class="bg-white divide-y divide-gray-200">
+                            <tbody id="sessionsTableBody" class="bg-white">
                                 <tr>
                                     <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                                         <div class="flex justify-center">
@@ -748,7 +880,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">VAUTH Device ID</label>
                             <input type="text" name="device_id" required placeholder="Enter VAUTH Device ID" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200">
                         </div>
-                        <button type="submit" class="bg-gradient-to-r from-primary to-secondary hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg transform hover:scale-105">
+                        <button type="submit" class="btn-primary px-8 py-3">
                             Generate Token
                         </button>
                     </form>
@@ -828,7 +960,7 @@
                     <p id="alertMessage" class="text-sm text-gray-500"></p>
                 </div>
                 <div class="items-center px-4 py-3">
-                    <button id="closeAlert" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-xl w-full shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 transition-all duration-200">
+                    <button id="closeAlert" class="btn-primary w-full">
                         Close Alert
                     </button>
                 </div>

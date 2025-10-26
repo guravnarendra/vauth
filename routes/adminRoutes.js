@@ -4,12 +4,10 @@ const User = require('../models/User');
 const Token = require('../models/Token');
 const Session = require('../models/Session');
 const { autoDeleteExpiredTokens } = require('../middleware/cleanup');
-
 const router = express.Router();
 
 // Auto-delete expired tokens setting
 let autoDeleteEnabled = false;
-
 /**
  * Admin authentication middleware
  */
@@ -187,64 +185,75 @@ router.get('/users', requireAdminAuth, async (req, res) => {
  * Get list of all tokens with status and expiry
  */
 router.get('/tokens', requireAdminAuth, async (req, res) => {
-    try {
-        const tokens = await Token.find({}).sort({ created_at: -1 });
-        
-        const tokenList = tokens.map(token => ({
-            _id: token._id,
-            device_id: token.device_id,
-            status: token.status,
-            created_at: token.created_at,
-            expires_at: token.expires_at,
-            used_at: token.used_at,
-            timeRemaining: token.timeRemaining
-        }));
-        
-        res.json({
-            success: true,
-            tokens: tokenList,
-            autoDeleteEnabled
-        });
+  try {
+    // FIXED: Get tokens array and sort manually
+    const tokens = await Token.find({});
+    
+    // Sort by created_at descending (newest first)
+    const sortedTokens = tokens.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    const tokenList = sortedTokens.map(token => ({
+      _id: token._id,
+      device_id: token.device_id,
+      status: token.status,
+      created_at: token.created_at,
+      expires_at: token.expires_at,
+      used_at: token.used_at,
+      timeRemaining: token.timeRemaining || calculateTimeRemaining(token)
+    }));
 
-    } catch (error) {
-        console.error('Get tokens error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        });
-    }
+    res.json({
+      success: true,
+      tokens: tokenList,
+      autoDeleteEnabled
+    });
+  } catch (error) {
+    console.error('Get tokens error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
+
+// Helper function to calculate time remaining
+function calculateTimeRemaining(token) {
+  if (token.status !== 'ACTIVE') return 0;
+  const now = new Date();
+  const expiresAt = new Date(token.expires_at);
+  const remaining = Math.max(0, expiresAt - now);
+  return Math.floor(remaining / 1000);
+}
 
 /**
  * DELETE /api/admin/tokens/:tokenId
  * Delete specific token
  */
 router.delete('/tokens/:tokenId', requireAdminAuth, async (req, res) => {
-    try {
-        const { tokenId } = req.params;
-        
-        const result = await Token.findByIdAndDelete(tokenId);
-        
-        if (!result) {
-            return res.status(404).json({
-                success: false,
-                message: 'Token not found'
-            });
-        }
-        
-        res.json({
-            success: true,
-            message: 'Token deleted successfully'
-        });
-
-    } catch (error) {
-        console.error('Delete token error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        });
+  try {
+    const { tokenId } = req.params;
+    const result = await Token.findByIdAndDelete(tokenId);
+    
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'Token not found'
+      });
     }
+
+    res.json({
+      success: true,
+      message: 'Token deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
+
 
 /**
  * PATCH /api/admin/auto-delete-expired
@@ -412,30 +421,33 @@ router.post('/virtual-device/generate-token', requireAdminAuth, [
  * Get dashboard statistics
  */
 router.get('/dashboard-stats', requireAdminAuth, async (req, res) => {
-    try {
-        const totalUsers = await User.countDocuments();
-        const activeTokens = await Token.countDocuments({ status: 'ACTIVE' });
-        const activeSessions = await Session.countDocuments({ status: 'ACTIVE' });
-        const expiredTokens = await Token.countDocuments({ status: 'EXPIRED' });
-        
-        res.json({
-            success: true,
-            stats: {
-                totalUsers,
-                activeTokens,
-                activeSessions,
-                expiredTokens,
-                autoDeleteEnabled
-            }
-        });
+  try {
+    const totalUsers = await User.countDocuments();
+    
+    // FIXED: Get all tokens and filter manually
+    const allTokens = await Token.find({});
+    const activeTokens = allTokens.filter(token => token.status === 'ACTIVE').length;
+    const expiredTokens = allTokens.filter(token => token.status === 'EXPIRED').length;
+    
+    const activeSessions = await Session.countDocuments({ status: 'ACTIVE' });
 
-    } catch (error) {
-        console.error('Get dashboard stats error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        });
-    }
+    res.json({
+      success: true,
+      stats: {
+        totalUsers,
+        activeTokens,
+        activeSessions,
+        expiredTokens,
+        autoDeleteEnabled
+      }
+    });
+  } catch (error) {
+    console.error('Get dashboard stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
 /**

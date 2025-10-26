@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const firebaseTokenManager = require('../utils/firebaseTokenManager');
 
 const tokenSchema = new mongoose.Schema({
   device_id: {
@@ -31,14 +32,13 @@ const tokenSchema = new mongoose.Schema({
   }
 });
 
-// Indexes for performance - specify names to avoid conflicts
+// Indexes for performance
 tokenSchema.index({ device_id: 1 }, { name: "token_device_id_index" });
 tokenSchema.index({ token_hash: 1 }, { name: "token_hash_index" });
 tokenSchema.index({ status: 1 }, { name: "token_status_index" });
 tokenSchema.index({ expires_at: 1 }, { name: "token_expires_at_index" });
 tokenSchema.index({ created_at: -1 }, { name: "token_created_at_index" });
 
-// ... rest of the Token model code remains the same
 // Static method to generate token hash
 tokenSchema.statics.generateTokenHash = function(device_id, plain_token) {
   return crypto.createHash('sha512').update(device_id + plain_token).digest('hex');
@@ -54,80 +54,69 @@ tokenSchema.statics.generateRandomToken = function() {
   return token;
 };
 
-// Static method to create new token
+// Static method to create new token (now uses Firebase)
 tokenSchema.statics.createToken = async function(device_id, expirySeconds = 300) {
-  const plain_token = this.generateRandomToken();
-  const token_hash = this.generateTokenHash(device_id, plain_token);
-  const expires_at = new Date(Date.now() + (expirySeconds * 1000));
-
-  const token = await this.create({
-    device_id,
-    token_hash,
-    expires_at
-  });
-
-  return {
-    token: token,
-    plain_token: plain_token
-  };
+  return await firebaseTokenManager.createToken(device_id, expirySeconds);
 };
 
-// Static method to verify token
+// Static method to verify token (now uses Firebase)
 tokenSchema.statics.verifyToken = async function(device_id, plain_token) {
-  const token_hash = this.generateTokenHash(device_id, plain_token);
-  const token = await this.findOne({
-    device_id,
-    token_hash,
-    status: 'ACTIVE'
-  });
-
-  if (!token) {
-    return { valid: false, reason: 'TOKEN_NOT_FOUND' };
-  }
-
-  if (token.expires_at < new Date()) {
-    // Mark as expired
-    token.status = 'EXPIRED';
-    await token.save();
-    return { valid: false, reason: 'TOKEN_EXPIRED' };
-  }
-
-  // Mark as used
-  token.status = 'USED';
-  token.used_at = new Date();
-  await token.save();
-
-  return { valid: true, token: token };
+  return await firebaseTokenManager.verifyToken(device_id, plain_token);
 };
 
-// Static method to cleanup expired tokens
-tokenSchema.statics.cleanupExpiredTokens = async function() {
-  const result = await this.updateMany(
-    {
-      status: 'ACTIVE',
-      expires_at: { $lt: new Date() }
-    },
-    {
-      $set: { status: 'EXPIRED' }
+// Static method to get all tokens (FIXED - returns array directly)
+tokenSchema.statics.find = async function(query = {}) {
+  try {
+    const tokens = await firebaseTokenManager.getAllTokens();
+    
+    // Apply basic filtering
+    let filteredTokens = tokens;
+    
+    if (query.status) {
+      filteredTokens = tokens.filter(token => token.status === query.status);
     }
-  );
-  return result.modifiedCount;
+    
+    // Return the array directly - the calling code will handle sorting
+    return filteredTokens;
+  } catch (error) {
+    console.error('Error in Token.find:', error);
+    return [];
+  }
 };
 
-// Static method to delete expired tokens
+// Static method to cleanup expired tokens (now uses Firebase)
+tokenSchema.statics.cleanupExpiredTokens = async function() {
+  return await firebaseTokenManager.cleanupExpiredTokens();
+};
+
+// Static method to delete expired tokens (now uses Firebase)
 tokenSchema.statics.deleteExpiredTokens = async function() {
-  const result = await this.deleteMany({
-    status: 'EXPIRED'
-  });
-  return result.deletedCount;
+  return await firebaseTokenManager.deleteExpiredTokens();
+};
+
+// Static method to find by ID and delete (now uses Firebase)
+tokenSchema.statics.findByIdAndDelete = async function(tokenId) {
+  const success = await firebaseTokenManager.deleteToken(tokenId);
+  return success ? { _id: tokenId } : null;
+};
+
+// Static method to count documents (now uses Firebase)
+tokenSchema.statics.countDocuments = async function(query = {}) {
+  const tokens = await firebaseTokenManager.getAllTokens();
+  
+  if (query.status) {
+    return tokens.filter(token => token.status === query.status).length;
+  }
+  
+  return tokens.length;
 };
 
 // Virtual for time remaining
 tokenSchema.virtual('timeRemaining').get(function() {
   if (this.status !== 'ACTIVE') return 0;
   const now = new Date();
-  const remaining = Math.max(0, this.expires_at - now);
-  return Math.floor(remaining / 1000); // Return seconds
+  const remaining = Math.max(0, new Date(this.expires_at) - now);
+  return Math.floor(remaining / 1000);
 });
 
 module.exports = mongoose.model('Token', tokenSchema);

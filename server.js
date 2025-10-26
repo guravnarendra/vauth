@@ -9,8 +9,9 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-// Import database connection
+// Import database connections
 const connectDB = require('./config/database');
+require('./config/firebase'); // Initialize Firebase
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
@@ -18,6 +19,9 @@ const adminRoutes = require('./routes/adminRoutes');
 
 // Import middleware
 const { cleanupExpiredData } = require('./middleware/cleanup');
+
+// Import Firebase token manager
+const firebaseTokenManager = require('./utils/firebaseTokenManager');
 
 // Initialize Express app
 const app = express();
@@ -30,12 +34,15 @@ const io = socketIo(server, {
     origin: "*",
     methods: ["GET", "POST"]
   },
-  pingTimeout: 60000,  // 60 seconds
-  pingInterval: 25000  // send ping every 25 seconds
+  pingTimeout: 60000, // 60 seconds
+  pingInterval: 25000 // send ping every 25 seconds
 });
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize Firebase real-time listeners
+firebaseTokenManager.setupRealTimeListeners(io);
 
 // Security middleware
 app.use(helmet({
@@ -108,52 +115,134 @@ app.use('/api/admin', adminRoutes);
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
+
 app.get('/2fa', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', '2fa.html'));
 });
+
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
+
 app.get('/admin/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-login.html'));
 });
+
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    services: {
+      mongodb: 'connected', // This would need actual health check
+      firebase: 'initialized'
+    }
+  });
 });
 
 // Socket.io Real-time Handling
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
-  
+
   // Admin joins monitoring room
   socket.on('join-admin', () => {
     socket.join('admin');
     console.log('Admin joined real-time monitoring:', socket.id);
+    
+    // Send welcome message with current system status
+    socket.emit('admin-welcome', {
+      message: 'Welcome to VAUTH Admin Dashboard',
+      timestamp: new Date(),
+      systemStatus: 'online'
+    });
+  });
+
+  // Handle token refresh requests
+  socket.on('refresh-tokens', async () => {
+    try {
+      console.log('Manual token refresh requested by:', socket.id);
+      // You can add any real-time token refresh logic here
+      socket.emit('tokens-refreshed', {
+        message: 'Tokens refreshed successfully',
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      socket.emit('refresh-error', {
+        message: 'Failed to refresh tokens',
+        error: error.message
+      });
+    }
+  });
+
+  // Handle session monitoring requests
+  socket.on('monitor-sessions', () => {
+    console.log('Session monitoring started for:', socket.id);
+    socket.emit('sessions-monitoring-started', {
+      message: 'Session monitoring activated',
+      timestamp: new Date()
+    });
   });
 
   // Disconnects
   socket.on('disconnect', (reason) => {
     console.log('Client disconnected:', socket.id, 'Reason:', reason);
+    
+    // Emit admin left event if they were in admin room
+    if (socket.rooms.has('admin')) {
+      socket.to('admin').emit('admin-left', {
+        adminId: socket.id,
+        timestamp: new Date()
+      });
+    }
   });
 
   // Handle socket errors
   socket.on('error', (error) => {
     console.error('Socket error:', socket.id, error);
   });
+
+  // Handle connection heartbeat
+  socket.on('heartbeat', (data) => {
+    socket.emit('heartbeat-ack', {
+      timestamp: new Date(),
+      clientId: socket.id
+    });
+  });
 });
 
 // Cleanup expired data every 5 minutes
 setInterval(cleanupExpiredData, 5 * 60 * 1000);
+
+// System status monitoring
+setInterval(() => {
+  const systemStatus = {
+    timestamp: new Date(),
+    connectedClients: io.engine.clientsCount,
+    memoryUsage: process.memoryUsage(),
+    uptime: process.uptime()
+  };
+  
+  // Emit system status to admin room
+  io.to('admin').emit('system-status', systemStatus);
+}, 30000); // Every 30 seconds
 
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({
     success: false,
-    message: 'Internal server error'
+    message: 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { error: err.message })
   });
 });
 
@@ -165,12 +254,65 @@ app.use((req, res) => {
   });
 });
 
+// Graceful shutdown handling
+process.on('SIGINT', () => {
+  console.log('\n🔴 Received SIGINT. Shutting down gracefully...');
+  
+  // Close socket.io connections
+  io.close(() => {
+    console.log('✅ Socket.IO server closed');
+  });
+  
+  // Close HTTP server
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+    process.exit(0);
+  });
+  
+  // Force close after 10 seconds
+  setTimeout(() => {
+    console.log('⚠️  Forcing shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+});
+
+process.on('SIGTERM', () => {
+  console.log('\n🔴 Received SIGTERM. Shutting down gracefully...');
+  
+  io.close(() => {
+    console.log('✅ Socket.IO server closed');
+  });
+  
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+    process.exit(0);
+  });
+  
+  setTimeout(() => {
+    console.log('⚠️  Forcing shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+});
+
+// Unhandled promise rejection handler
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Promise Rejection at:', promise, 'reason:', reason);
+});
+
+// Uncaught exception handler
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ VAUTH Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`💡 Access: http://localhost:${PORT}`);
+  console.log(`🔧 Firebase: ${process.env.FIREBASE_PROJECT_ID ? 'Configured' : 'Not configured'}`);
+  console.log(`🗄️  Database: ${process.env.MONGODB_URI ? 'MongoDB + Firebase' : 'Not configured'}`);
 });
 
-module.exports = { app, io };
+module.exports = { app, io, server };

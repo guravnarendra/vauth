@@ -6,16 +6,16 @@ let tokenCountdownIntervals = new Map();
 let sessionCountdownIntervals = new Map();
 
 // Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeSocket();
     initializeSidebar();
     initializeBottomNav();
     loadDashboardStats();
     loadInitialData();
-    
+
     // Set up event listeners
     setupEventListeners();
-    
+
     // Refresh data every 30 seconds
     setInterval(loadDashboardStats, 30000);
 });
@@ -23,13 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialize Socket.io connection
 function initializeSocket() {
     socket = io();
-    
-    socket.on('connect', function() {
+    socket.on('connect', function () {
         console.log('Connected to server');
         socket.emit('join-admin');
         addRecentActivity('Connected to real-time server', 'success');
     });
-    
     // Real-time event handlers
     socket.on('user-login-attempt', handleLoginAttempt);
     socket.on('token-verification', handleTokenVerification);
@@ -39,26 +37,72 @@ function initializeSocket() {
     socket.on('virtual-token-generated', handleVirtualTokenGenerated);
     socket.on('session-force-logout', handleSessionForceLogout);
     socket.on('token-expired', handleTokenExpired);
+    socket.on('token-status-update', handleTokenStatusUpdate);
+
+}
+
+// Add new event handler for token status updates
+function handleTokenStatusUpdate(data) {
+    const { tokenId, newStatus } = data;
+
+    // Update token in the tokens table if visible
+    if (currentSection === 'tokens') {
+        updateTokenStatusInUI(tokenId, newStatus);
+    }
+
+    // Refresh dashboard stats
+    loadDashboardStats();
+
+    addRecentActivity(`Token status updated to ${newStatus}`, 'info');
+}
+
+// Update token status in UI
+function updateTokenStatusInUI(tokenId, newStatus) {
+    // Update desktop table
+    const tokenRow = document.querySelector(`#tokensTableBody tr td.status-badge`);
+    if (tokenRow) {
+        const statusBadge = tokenRow.querySelector('.status-badge');
+        if (statusBadge) {
+            statusBadge.textContent = newStatus;
+            statusBadge.className = `status-badge ${getStatusClass(newStatus)}`;
+        }
+    }
+
+    // Update mobile table
+    const mobileToken = document.querySelector(`[id*="mobile-token-time-${tokenId}"]`);
+    if (mobileToken) {
+        const mobileStatus = mobileToken.closest('.mobile-table-card').querySelector('.status-badge');
+        if (mobileStatus) {
+            mobileStatus.textContent = newStatus;
+            mobileStatus.className = `status-badge ${getStatusClass(newStatus)}`;
+        }
+    }
+
+    // Stop countdown if token is no longer active
+    if (newStatus !== 'ACTIVE' && tokenCountdownIntervals.has(tokenId)) {
+        clearInterval(tokenCountdownIntervals.get(tokenId));
+        tokenCountdownIntervals.delete(tokenId);
+    }
 }
 
 // Initialize sidebar navigation
 function initializeSidebar() {
     const sidebarItems = document.querySelectorAll('.sidebar-item');
-    
+
     sidebarItems.forEach(item => {
-        item.addEventListener('click', function(e) {
+        item.addEventListener('click', function (e) {
             e.preventDefault();
-            
+
             // Remove active class from all items
             sidebarItems.forEach(i => i.classList.remove('active'));
-            
+
             // Add active class to clicked item
             this.classList.add('active');
-            
+
             // Show corresponding section
             const section = this.getAttribute('data-section');
             showSection(section);
-            
+
             // Update bottom nav
             updateBottomNav(section);
         });
@@ -68,17 +112,17 @@ function initializeSidebar() {
 // Initialize mobile bottom navigation
 function initializeBottomNav() {
     const navItems = document.querySelectorAll('.mobile-nav-item');
-    
+
     navItems.forEach(item => {
-        item.addEventListener('click', function(e) {
+        item.addEventListener('click', function (e) {
             e.preventDefault();
-            
+
             // Remove active class from all items
             navItems.forEach(i => i.classList.remove('active'));
-            
+
             // Add active class to clicked item
             this.classList.add('active');
-            
+
             // Show corresponding section
             const section = this.getAttribute('data-section');
             showSection(section);
@@ -89,7 +133,7 @@ function initializeBottomNav() {
 // Update bottom navigation active state
 function updateBottomNav(section) {
     const navItems = document.querySelectorAll('.mobile-nav-item');
-    
+
     navItems.forEach(item => {
         if (item.getAttribute('data-section') === section) {
             item.classList.add('active');
@@ -104,13 +148,13 @@ function showSection(sectionName) {
     // Hide all sections
     const sections = document.querySelectorAll('.section');
     sections.forEach(section => section.classList.add('hidden'));
-    
+
     // Show selected section
     const targetSection = document.getElementById(`${sectionName}-section`);
     if (targetSection) {
         targetSection.classList.remove('hidden');
         currentSection = sectionName;
-        
+
         // Load section-specific data
         loadSectionData(sectionName);
     }
@@ -118,7 +162,7 @@ function showSection(sectionName) {
 
 // Load section-specific data
 function loadSectionData(sectionName) {
-    switch(sectionName) {
+    switch (sectionName) {
         case 'users':
             loadUsers();
             break;
@@ -142,17 +186,17 @@ async function loadDashboardStats() {
         document.getElementById('activeTokens').textContent = '--';
         document.getElementById('activeSessions').textContent = '--';
         document.getElementById('expiredTokens').textContent = '--';
-        
+
         const response = await fetch('/api/admin/dashboard-stats');
         const data = await response.json();
-        
+
         if (data.success) {
             // Animate number counting
             animateValue('totalUsers', 0, data.stats.totalUsers, 1000);
             animateValue('activeTokens', 0, data.stats.activeTokens, 1000);
             animateValue('activeSessions', 0, data.stats.activeSessions, 1000);
             animateValue('expiredTokens', 0, data.stats.expiredTokens, 1000);
-            
+
             autoDeleteEnabled = data.stats.autoDeleteEnabled;
             updateAutoDeleteStatus();
         }
@@ -183,16 +227,16 @@ async function loadUsers() {
     try {
         const response = await fetch('/api/admin/users');
         const data = await response.json();
-        
+
         if (data.success) {
             // Update desktop table
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
-            
+
             // Update mobile table
             const mobileTable = document.getElementById('usersMobileTable');
             mobileTable.innerHTML = '';
-            
+
             if (data.users.length === 0) {
                 tbody.innerHTML = `
                     <tr>
@@ -218,7 +262,7 @@ async function loadUsers() {
                 `;
                 return;
             }
-            
+
             // Desktop table
             data.users.forEach(user => {
                 const row = document.createElement('tr');
@@ -245,7 +289,7 @@ async function loadUsers() {
                 `;
                 tbody.appendChild(row);
             });
-            
+
             // Mobile cards
             data.users.forEach(user => {
                 const card = document.createElement('div');
@@ -286,21 +330,21 @@ async function loadTokens() {
     try {
         // Clear existing countdown intervals
         clearAllTokenCountdowns();
-        
+
         const response = await fetch('/api/admin/tokens');
         const data = await response.json();
-        
+
         if (data.success) {
             // Update desktop table
             const tbody = document.getElementById('tokensTableBody');
             tbody.innerHTML = '';
             autoDeleteEnabled = data.autoDeleteEnabled;
             updateAutoDeleteStatus();
-            
+
             // Update mobile table
             const mobileTable = document.getElementById('tokensMobileTable');
             mobileTable.innerHTML = '';
-            
+
             if (data.tokens.length === 0) {
                 tbody.innerHTML = `
                     <tr>
@@ -326,14 +370,14 @@ async function loadTokens() {
                 `;
                 return;
             }
-            
+
             // Desktop table
             data.tokens.forEach(token => {
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-all duration-200';
                 const statusClass = getStatusClass(token.status);
                 const timeRemaining = token.status === 'ACTIVE' ? formatTime(token.timeRemaining) : '--';
-                
+
                 row.innerHTML = `
                     <td class="px-6 py-4">
                         <span class="font-mono text-sm font-semibold text-gray-900">${token.device_id}</span>
@@ -356,13 +400,13 @@ async function loadTokens() {
                     </td>
                 `;
                 tbody.appendChild(row);
-                
+
                 // Start countdown for active tokens
                 if (token.status === 'ACTIVE' && token.timeRemaining > 0) {
                     startTokenCountdown(token._id, token.timeRemaining);
                 }
             });
-            
+
             // Mobile cards - Enhanced design
             data.tokens.forEach(token => {
                 const card = document.createElement('div');
@@ -370,7 +414,7 @@ async function loadTokens() {
                 const timeRemaining = token.status === 'ACTIVE' ? formatTime(token.timeRemaining) : '--';
                 const statusBadge = getMobileStatusBadge(token.status);
                 const isExpiring = token.status === 'ACTIVE' && token.timeRemaining < 60;
-                
+
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex-1">
@@ -407,7 +451,7 @@ async function loadTokens() {
                     </div>
                 `;
                 mobileTable.appendChild(card);
-                
+
                 // Start countdown for active tokens on mobile
                 if (token.status === 'ACTIVE' && token.timeRemaining > 0) {
                     startMobileTokenCountdown(token._id, token.timeRemaining);
@@ -426,32 +470,32 @@ function startTokenCountdown(tokenId, initialSeconds) {
     if (tokenCountdownIntervals.has(tokenId)) {
         clearInterval(tokenCountdownIntervals.get(tokenId));
     }
-    
+
     let seconds = initialSeconds;
     const timeElement = document.getElementById(`token-time-${tokenId}`);
-    
+
     const interval = setInterval(() => {
         seconds--;
-        
+
         if (seconds <= 0) {
             timeElement.textContent = '00:00';
             timeElement.className = 'text-red-600 font-semibold';
             clearInterval(interval);
             tokenCountdownIntervals.delete(tokenId);
-            
+
             // Update token status to expired
             updateTokenStatus(tokenId, 'EXPIRED');
             return;
         }
-        
+
         // Add warning class when less than 60 seconds
         if (seconds < 60) {
             timeElement.className = 'text-red-600 font-semibold';
         }
-        
+
         timeElement.textContent = formatTime(seconds);
     }, 1000);
-    
+
     tokenCountdownIntervals.set(tokenId, interval);
 }
 
@@ -459,22 +503,22 @@ function startTokenCountdown(tokenId, initialSeconds) {
 function startMobileTokenCountdown(tokenId, initialSeconds) {
     let seconds = initialSeconds;
     const timeElement = document.getElementById(`mobile-token-time-${tokenId}`);
-    
+
     const interval = setInterval(() => {
         seconds--;
-        
+
         if (seconds <= 0) {
             timeElement.textContent = '00:00';
             timeElement.className = 'text-red-600 font-semibold';
             clearInterval(interval);
             return;
         }
-        
+
         // Add warning class when less than 60 seconds
         if (seconds < 60) {
             timeElement.className = 'text-red-600 font-semibold';
         }
-        
+
         timeElement.textContent = formatTime(seconds);
     }, 1000);
 }
@@ -495,7 +539,7 @@ function updateTokenStatus(tokenId, newStatus) {
         statusElement.textContent = newStatus;
         statusElement.className = `status-badge ${getStatusClass(newStatus)}`;
     }
-    
+
     // Update dashboard stats
     loadDashboardStats();
 }
@@ -505,19 +549,19 @@ async function loadSessions() {
     try {
         // Clear existing countdown intervals
         clearAllSessionCountdowns();
-        
+
         const response = await fetch('/api/admin/sessions');
         const data = await response.json();
-        
+
         if (data.success) {
             // Update desktop table
             const tbody = document.getElementById('sessionsTableBody');
             tbody.innerHTML = '';
-            
+
             // Update mobile table
             const mobileTable = document.getElementById('sessionsMobileTable');
             mobileTable.innerHTML = '';
-            
+
             if (data.sessions.length === 0) {
                 tbody.innerHTML = `
                     <tr>
@@ -543,13 +587,13 @@ async function loadSessions() {
                 `;
                 return;
             }
-            
+
             // Desktop table
             data.sessions.forEach(session => {
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-all duration-200';
                 const isExpiring = session.timeRemaining < 300; // 5 minutes
-                
+
                 row.innerHTML = `
                     <td class="px-6 py-4">
                         <div class="text-sm font-semibold text-gray-900">${session.username}</div>
@@ -575,19 +619,19 @@ async function loadSessions() {
                     </td>
                 `;
                 tbody.appendChild(row);
-                
+
                 // Start countdown for session time remaining
                 if (session.timeRemaining > 0) {
                     startSessionCountdown(session._id, session.timeRemaining);
                 }
             });
-            
+
             // Mobile cards
             data.sessions.forEach(session => {
                 const card = document.createElement('div');
                 card.className = 'mobile-table-card';
                 const isExpiring = session.timeRemaining < 300;
-                
+
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex-1">
@@ -628,7 +672,7 @@ async function loadSessions() {
                     </div>
                 `;
                 mobileTable.appendChild(card);
-                
+
                 // Start countdown for session time remaining on mobile
                 if (session.timeRemaining > 0) {
                     startMobileSessionCountdown(session._id, session.timeRemaining);
@@ -647,13 +691,13 @@ function startSessionCountdown(sessionId, initialSeconds) {
     if (sessionCountdownIntervals.has(sessionId)) {
         clearInterval(sessionCountdownIntervals.get(sessionId));
     }
-    
+
     let seconds = initialSeconds;
     const timeElement = document.getElementById(`session-time-${sessionId}`);
-    
+
     const interval = setInterval(() => {
         seconds--;
-        
+
         if (seconds <= 0) {
             timeElement.textContent = '00:00';
             timeElement.className = 'text-red-600 font-semibold';
@@ -661,15 +705,15 @@ function startSessionCountdown(sessionId, initialSeconds) {
             sessionCountdownIntervals.delete(sessionId);
             return;
         }
-        
+
         // Add warning class when less than 5 minutes
         if (seconds < 300) {
             timeElement.className = 'text-red-600 font-semibold';
         }
-        
+
         timeElement.textContent = formatTime(seconds);
     }, 1000);
-    
+
     sessionCountdownIntervals.set(sessionId, interval);
 }
 
@@ -677,22 +721,22 @@ function startSessionCountdown(sessionId, initialSeconds) {
 function startMobileSessionCountdown(sessionId, initialSeconds) {
     let seconds = initialSeconds;
     const timeElement = document.getElementById(`mobile-session-time-${sessionId}`);
-    
+
     const interval = setInterval(() => {
         seconds--;
-        
+
         if (seconds <= 0) {
             timeElement.textContent = '00:00';
             timeElement.className = 'text-red-600 font-semibold';
             clearInterval(interval);
             return;
         }
-        
+
         // Add warning class when less than 5 minutes
         if (seconds < 300) {
             timeElement.className = 'text-red-600 font-semibold';
         }
-        
+
         timeElement.textContent = formatTime(seconds);
     }, 1000);
 }
@@ -709,21 +753,21 @@ function clearAllSessionCountdowns() {
 function setupEventListeners() {
     // Logout button
     document.getElementById('logoutButton').addEventListener('click', logout);
-    
+
     // Add user form
     document.getElementById('addUserForm').addEventListener('submit', handleAddUser);
-    
+
     // Virtual token form
     document.getElementById('virtualTokenForm').addEventListener('submit', handleVirtualToken);
-    
+
     // Refresh buttons
     document.getElementById('refreshUsers').addEventListener('click', loadUsers);
     document.getElementById('refreshTokens').addEventListener('click', loadTokens);
     document.getElementById('refreshSessions').addEventListener('click', loadSessions);
-    
+
     // Auto-delete toggle
     document.getElementById('toggleAutoDelete').addEventListener('click', toggleAutoDelete);
-    
+
     // Alert modal close
     document.getElementById('closeAlert').addEventListener('click', closeAlert);
 }
@@ -731,10 +775,10 @@ function setupEventListeners() {
 // Handle add user form submission
 async function handleAddUser(e) {
     e.preventDefault();
-    
+
     const formData = new FormData(e.target);
     const userData = Object.fromEntries(formData);
-    
+
     try {
         const response = await fetch('/api/admin/add-user', {
             method: 'POST',
@@ -743,22 +787,22 @@ async function handleAddUser(e) {
             },
             body: JSON.stringify(userData)
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Show generated credentials
             document.getElementById('genUsername').textContent = data.credentials.username;
             document.getElementById('genPassword').textContent = data.credentials.password;
             document.getElementById('genDeviceId').textContent = data.credentials.vauth_device_ID;
             document.getElementById('credentialsDisplay').classList.remove('hidden');
-            
+
             // Reset form
             e.target.reset();
-            
+
             // Refresh stats
             loadDashboardStats();
-            
+
             addRecentActivity(`New user created: ${userData.name}`, 'success');
         } else {
             showAlert('Error creating user: ' + data.message);
@@ -774,10 +818,10 @@ async function handleAddUser(e) {
 // Handle virtual token generation
 async function handleVirtualToken(e) {
     e.preventDefault();
-    
+
     const formData = new FormData(e.target);
     const deviceId = formData.get('device_id');
-    
+
     try {
         const response = await fetch('/api/admin/virtual-device/generate-token', {
             method: 'POST',
@@ -786,18 +830,18 @@ async function handleVirtualToken(e) {
             },
             body: JSON.stringify({ device_id: deviceId })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Show generated token
             document.getElementById('generatedToken').textContent = data.token;
             document.getElementById('tokenExpiry').textContent = formatDate(data.expires_at);
             document.getElementById('tokenDisplay').classList.remove('hidden');
-            
+
             // Reset form
             e.target.reset();
-            
+
             addRecentActivity(`Virtual token generated for device ${deviceId}`, 'success');
         } else {
             showAlert('Error generating token: ' + data.message);
@@ -815,21 +859,21 @@ async function deleteToken(tokenId) {
     if (!confirm('Are you sure you want to delete this token?')) {
         return;
     }
-    
+
     try {
         const response = await fetch(`/api/admin/tokens/${tokenId}`, {
             method: 'DELETE'
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Clear countdown for this token
             if (tokenCountdownIntervals.has(tokenId)) {
                 clearInterval(tokenCountdownIntervals.get(tokenId));
                 tokenCountdownIntervals.delete(tokenId);
             }
-            
+
             loadTokens(); // Refresh tokens list
             loadDashboardStats(); // Refresh stats
             addRecentActivity('Token deleted successfully', 'success');
@@ -849,21 +893,21 @@ async function forceLogout(sessionId) {
     if (!confirm('Are you sure you want to force logout this session?')) {
         return;
     }
-    
+
     try {
         const response = await fetch(`/api/admin/sessions/${sessionId}/force-logout`, {
             method: 'POST'
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Clear countdown for this session
             if (sessionCountdownIntervals.has(sessionId)) {
                 clearInterval(sessionCountdownIntervals.get(sessionId));
                 sessionCountdownIntervals.delete(sessionId);
             }
-            
+
             loadSessions(); // Refresh sessions list
             loadDashboardStats(); // Refresh stats
             addRecentActivity('Session force logout executed', 'warning');
@@ -884,9 +928,9 @@ async function toggleAutoDelete() {
         const response = await fetch('/api/admin/auto-delete-expired', {
             method: 'PATCH'
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             autoDeleteEnabled = data.autoDeleteEnabled;
             updateAutoDeleteStatus();
@@ -907,7 +951,7 @@ async function toggleAutoDelete() {
 function updateAutoDeleteStatus() {
     const statusElement = document.getElementById('autoDeleteStatus');
     statusElement.textContent = autoDeleteEnabled ? 'ON' : 'OFF';
-    
+
     const button = document.getElementById('toggleAutoDelete');
     if (autoDeleteEnabled) {
         button.classList.remove('btn-warning');
@@ -930,7 +974,7 @@ function handleLoginAttempt(data) {
     const status = data.success ? 'success' : 'error';
     const message = `Login attempt by ${data.username} from ${data.ip} - ${data.success ? 'Success' : 'Failed'}`;
     addRecentActivity(message, status);
-    
+
     if (currentSection === 'dashboard') {
         animateRequestFlow('login', data.success);
     }
@@ -940,11 +984,11 @@ function handleTokenVerification(data) {
     const status = data.success ? 'success' : 'error';
     const message = `Token verification for ${data.username || 'Unknown'} - ${data.success ? 'Valid' : 'Invalid'}`;
     addRecentActivity(message, status);
-    
+
     if (currentSection === 'dashboard') {
         animateRequestFlow('token', data.success);
     }
-    
+
     // Refresh tokens if on tokens page
     if (currentSection === 'tokens') {
         loadTokens();
@@ -954,7 +998,7 @@ function handleTokenVerification(data) {
 function handleSessionCreated(data) {
     addRecentActivity(`New session created for ${data.username}`, 'success');
     loadDashboardStats();
-    
+
     if (currentSection === 'sessions') {
         loadSessions();
     }
@@ -963,7 +1007,7 @@ function handleSessionCreated(data) {
 function handleUserLogout(data) {
     addRecentActivity(`User ${data.username} logged out`, 'info');
     loadDashboardStats();
-    
+
     if (currentSection === 'sessions') {
         loadSessions();
     }
@@ -971,20 +1015,20 @@ function handleUserLogout(data) {
 
 function handleSecurityAlert(data) {
     let message = '';
-    
+
     if (data.type === 'MULTIPLE_FAILED_LOGINS') {
         message = `⚠ Security Alert: ${data.username} has ${data.attempts} failed login attempts from ${data.lastIP}`;
     } else if (data.type === 'MULTIPLE_FAILED_TOKENS') {
         message = `⚠ Security Alert: ${data.username} is attempting unauthorized access with invalid tokens`;
     }
-    
+
     showAlert(message);
     addRecentActivity(message, 'warning');
 }
 
 function handleVirtualTokenGenerated(data) {
     addRecentActivity(`Virtual token generated for device ${data.device_id}`, 'info');
-    
+
     if (currentSection === 'tokens') {
         loadTokens();
     }
@@ -992,7 +1036,7 @@ function handleVirtualTokenGenerated(data) {
 
 function handleSessionForceLogout(data) {
     addRecentActivity(`Session force logout executed`, 'warning');
-    
+
     if (currentSection === 'sessions') {
         loadSessions();
     }
@@ -1000,7 +1044,7 @@ function handleSessionForceLogout(data) {
 
 function handleTokenExpired(data) {
     addRecentActivity(`Token expired for device ${data.device_id}`, 'warning');
-    
+
     if (currentSection === 'tokens') {
         loadTokens();
     }
@@ -1010,19 +1054,19 @@ function handleTokenExpired(data) {
 // Add recent activity
 function addRecentActivity(message, type = 'info') {
     const activityContainer = document.getElementById('recentActivity');
-    
+
     // Remove "No recent activity" message if present
     const emptyMessage = activityContainer.querySelector('.text-center');
     if (emptyMessage) {
         emptyMessage.remove();
     }
-    
+
     const activityItem = document.createElement('div');
     activityItem.className = `flex items-start p-4 rounded-xl ${getActivityClass(type)} border-l-4 ${getActivityBorderClass(type)}`;
-    
+
     const icon = getActivityIcon(type);
     const timestamp = new Date().toLocaleTimeString();
-    
+
     activityItem.innerHTML = `
         <div class="flex-shrink-0 mt-1">
             ${icon}
@@ -1032,10 +1076,10 @@ function addRecentActivity(message, type = 'info') {
             <p class="text-xs text-gray-500 mt-1">${timestamp}</p>
         </div>
     `;
-    
+
     // Add to top of list
     activityContainer.insertBefore(activityItem, activityContainer.firstChild);
-    
+
     // Keep only last 8 activities
     while (activityContainer.children.length > 8) {
         activityContainer.removeChild(activityContainer.lastChild);
@@ -1045,36 +1089,36 @@ function addRecentActivity(message, type = 'info') {
 // Animate request flow on live map
 function animateRequestFlow(type, success) {
     const liveMap = document.getElementById('liveMap');
-    
+
     // Create animated elements
     const sourceIcon = document.createElement('div');
     sourceIcon.className = 'floating-icon w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-lg';
     sourceIcon.textContent = type === 'login' ? '👤' : '📱';
     sourceIcon.style.left = '15%';
     sourceIcon.style.top = '50%';
-    
+
     const targetIcon = document.createElement('div');
     targetIcon.className = 'floating-icon w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-lg';
     targetIcon.textContent = '⚡';
     targetIcon.style.right = '15%';
     targetIcon.style.top = '50%';
-    
+
     const line = document.createElement('div');
     line.className = `connection-line ${success ? 'bg-green-500' : 'bg-red-500'} shadow-md`;
     line.style.left = '23%';
     line.style.top = '50%';
     line.style.width = '54%';
     line.style.transform = 'scaleX(0)';
-    
+
     liveMap.appendChild(sourceIcon);
     liveMap.appendChild(targetIcon);
     liveMap.appendChild(line);
-    
+
     // Animate the line
     setTimeout(() => {
         line.style.transform = 'scaleX(1)';
     }, 100);
-    
+
     // Remove after delay
     setTimeout(() => {
         if (sourceIcon.parentNode) sourceIcon.parentNode.removeChild(sourceIcon);
@@ -1100,7 +1144,7 @@ async function logout() {
         // Clear all intervals before logout
         clearAllTokenCountdowns();
         clearAllSessionCountdowns();
-        
+
         await fetch('/api/admin/logout', {
             method: 'POST'
         });
@@ -1139,7 +1183,7 @@ function formatTime(seconds) {
 }
 
 function getStatusClass(status) {
-    switch(status) {
+    switch (status) {
         case 'ACTIVE':
             return 'status-active';
         case 'USED':
@@ -1154,7 +1198,7 @@ function getStatusClass(status) {
 }
 
 function getMobileStatusBadge(status) {
-    switch(status) {
+    switch (status) {
         case 'ACTIVE':
             return '<span class="status-badge status-active">ACTIVE</span>';
         case 'USED':
@@ -1169,7 +1213,7 @@ function getMobileStatusBadge(status) {
 }
 
 function getActivityClass(type) {
-    switch(type) {
+    switch (type) {
         case 'success':
             return 'bg-green-50';
         case 'error':
@@ -1182,7 +1226,7 @@ function getActivityClass(type) {
 }
 
 function getActivityBorderClass(type) {
-    switch(type) {
+    switch (type) {
         case 'success':
             return 'border-green-400';
         case 'error':
@@ -1196,8 +1240,8 @@ function getActivityBorderClass(type) {
 
 function getActivityIcon(type) {
     const iconClass = 'h-5 w-5';
-    
-    switch(type) {
+
+    switch (type) {
         case 'success':
             return `<svg class="${iconClass} text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>`;
         case 'error':

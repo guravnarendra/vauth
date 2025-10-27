@@ -10,48 +10,224 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#3B82F6',
-                        secondary: '#1E40AF',
+                        primary: '#7C3AED',
+                        secondary: '#4F46E5',
                         accent: '#F59E0B',
                         dark: '#1F2937',
-                        light: '#F9FAFB'
+                        light: '#F9FAFB',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        error: '#EF4444',
+                        info: '#3B82F6'
                     }
                 }
             }
         }
     </script>
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
         }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(124, 58, 237, 0.15);
+            border-color: #7c3aed;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f8fafc;
+            color: #374151;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+        }
+        
+        .btn-secondary:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-warning:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+        }
+        
         .countdown-circle {
             transition: stroke-dasharray 1s linear;
         }
+        
         .pulse-animation {
             animation: pulse 2s infinite;
         }
+        
         @keyframes pulse {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .mobile-stack {
+                flex-direction: column;
+            }
+            
+            .mobile-center {
+                text-align: center;
+            }
+            
+            .mobile-padding {
+                padding: 16px;
+            }
+            
+            .mobile-margin {
+                margin-bottom: 16px;
+            }
+            
+            .session-info-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .session-info-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+            
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7c3aed;
+        }
+        
+        /* Animation for stats */
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .count-animation {
+            animation: countUp 0.6s ease-out;
         }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
+    <nav class="bg-white shadow-sm border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <h1 class="text-2xl font-bold text-primary">VAUTH</h1>
+            <div class="flex justify-between h-16 mobile-stack">
+                <div class="flex items-center mobile-center mobile-margin">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <h1 class="text-xl font-bold gradient-text">VAUTH</h1>
                     </div>
                     <div class="ml-6">
                         <span class="text-gray-600">Welcome, <span id="usernameDisplay" class="font-semibold text-gray-900">Loading...</span></span>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-4 mobile-center">
                     <!-- Session Timer -->
-                    <div class="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg">
+                    <div class="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-xl mobile-margin">
                         <svg class="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
@@ -61,7 +237,7 @@
                     <!-- Logout Button -->
                     <button 
                         id="logoutButton"
-                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-300"
+                        class="btn-danger"
                     >
                         Logout
                     </button>
@@ -73,11 +249,11 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <!-- Welcome Section -->
-        <div class="px-4 py-6 sm:px-0">
-            <div class="bg-white overflow-hidden shadow-xl rounded-lg">
+        <div class="px-4 py-6 sm:px-0 mobile-padding">
+            <div class="bg-white overflow-hidden shadow-xl rounded-2xl card-hover">
                 <div class="gradient-bg px-6 py-8 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
+                    <div class="flex items-center justify-between mobile-stack">
+                        <div class="mobile-center">
                             <h1 class="text-3xl font-bold">Welcome to Your Dashboard</h1>
                             <p class="mt-2 text-lg opacity-90">You have successfully authenticated with VAUTH</p>
                         </div>
@@ -91,8 +267,8 @@
                 
                 <!-- Session Info -->
                 <div class="px-6 py-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="session-info-grid grid">
+                        <div class="bg-green-50 border border-green-200 rounded-xl p-4 card-hover">
                             <div class="flex items-center">
                                 <svg class="h-8 w-8 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
@@ -104,7 +280,7 @@
                             </div>
                         </div>
                         
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 card-hover">
                             <div class="flex items-center">
                                 <svg class="h-8 w-8 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" clip-rule="evenodd"></path>
@@ -116,7 +292,7 @@
                             </div>
                         </div>
                         
-                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 card-hover">
                             <div class="flex items-center">
                                 <svg class="h-8 w-8 text-purple-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clip-rule="evenodd"></path>
@@ -133,10 +309,10 @@
         </div>
 
         <!-- Auto-Logout Warning -->
-        <div id="logoutWarning" class="hidden px-4 py-6 sm:px-0">
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
+        <div id="logoutWarning" class="hidden px-4 py-6 sm:px-0 mobile-padding">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 card-hover">
+                <div class="flex items-center justify-between mobile-stack">
+                    <div class="flex items-center mobile-center mobile-margin">
                         <svg class="h-8 w-8 text-yellow-500 mr-3 pulse-animation" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                         </svg>
@@ -147,7 +323,7 @@
                     </div>
                     <button 
                         id="extendSessionButton"
-                        class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition duration-300"
+                        class="btn-warning"
                     >
                         Stay Logged In
                     </button>
@@ -156,14 +332,14 @@
         </div>
 
         <!-- Features Section -->
-        <div class="px-4 py-6 sm:px-0">
-            <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+        <div class="px-4 py-6 sm:px-0 mobile-padding">
+            <div class="bg-white shadow-xl rounded-2xl overflow-hidden card-hover">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h2 class="text-xl font-semibold text-gray-900">Account Features</h2>
                 </div>
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                    <div class="features-grid grid">
+                        <div class="border border-gray-200 rounded-xl p-4 card-hover">
                             <div class="flex items-center mb-3">
                                 <svg class="h-6 w-6 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
@@ -173,7 +349,7 @@
                             <p class="text-gray-600">Your account is protected with two-factor authentication using VAUTH device tokens.</p>
                         </div>
                         
-                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                        <div class="border border-gray-200 rounded-xl p-4 card-hover">
                             <div class="flex items-center mb-3">
                                 <svg class="h-6 w-6 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
@@ -183,7 +359,7 @@
                             <p class="text-gray-600">All your personal information is encrypted using AES-256-GCM encryption.</p>
                         </div>
                         
-                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                        <div class="border border-gray-200 rounded-xl p-4 card-hover">
                             <div class="flex items-center mb-3">
                                 <svg class="h-6 w-6 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -193,7 +369,7 @@
                             <p class="text-gray-600">Automatic session expiry and real-time monitoring for enhanced security.</p>
                         </div>
                         
-                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                        <div class="border border-gray-200 rounded-xl p-4 card-hover">
                             <div class="flex items-center mb-3">
                                 <svg class="h-6 w-6 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -203,6 +379,28 @@
                             <p class="text-gray-600">Your account activity is monitored in real-time for suspicious behavior.</p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Alert Modal -->
+    <div id="alertModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-96 shadow-lg rounded-2xl bg-white">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2">Session Expired</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p id="alertMessage" class="text-sm text-gray-500">Your session has expired. Please log in again.</p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="closeAlert" class="btn-primary w-full">
+                        OK
+                    </button>
                 </div>
             </div>
         </div>
@@ -221,23 +419,30 @@
 
         async function checkSession() {
             try {
-                const response = await fetch('/api/user/session-status');
+                const response = await fetch('/api/user/session-status', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
                 const data = await response.json();
                 
                 if (!data.success || !data.authenticated) {
-                    // Redirect to login if not authenticated
-                    window.location.href = '/login';
+                    // Show session expired modal
+                    showAlert('Your session has expired. Please log in again.');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
                     return;
                 }
                 
                 // Update UI with user info
                 document.getElementById('usernameDisplay').textContent = data.username;
-                timeRemaining = data.timeRemaining;
+                timeRemaining = data.timeRemaining || 1800; // Default to 30 minutes
                 updateTimerDisplay();
                 
             } catch (error) {
                 console.error('Session check error:', error);
-                window.location.href = '/login';
+                showAlert('Network error. Please check your connection.');
             }
         }
 
@@ -254,6 +459,7 @@
                 
                 // Auto-logout when time expires
                 if (timeRemaining <= 0) {
+                    clearInterval(sessionTimer);
                     await logout();
                 }
                 
@@ -277,10 +483,13 @@
             const timerElement = document.getElementById('sessionTimer');
             if (timeRemaining <= 120) {
                 timerElement.classList.add('text-red-600');
-                timerElement.classList.remove('text-gray-700');
+                timerElement.classList.remove('text-gray-700', 'text-yellow-600');
             } else if (timeRemaining <= 300) {
                 timerElement.classList.add('text-yellow-600');
-                timerElement.classList.remove('text-gray-700');
+                timerElement.classList.remove('text-gray-700', 'text-red-600');
+            } else {
+                timerElement.classList.add('text-gray-700');
+                timerElement.classList.remove('text-yellow-600', 'text-red-600');
             }
         }
 
@@ -291,7 +500,10 @@
         async function logout() {
             try {
                 await fetch('/api/user/logout', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 });
             } catch (error) {
                 console.error('Logout error:', error);
@@ -300,21 +512,59 @@
             }
         }
 
+        // Alert modal functions
+        function showAlert(message) {
+            const alertModal = document.getElementById('alertModal');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            alertMessage.textContent = message;
+            alertModal.classList.remove('hidden');
+        }
+
+        // Close alert modal
+        document.getElementById('closeAlert').addEventListener('click', function() {
+            document.getElementById('alertModal').classList.add('hidden');
+            window.location.href = '/login';
+        });
+
         // Logout button handler
         document.getElementById('logoutButton').addEventListener('click', logout);
 
         // Extend session button handler
         document.getElementById('extendSessionButton').addEventListener('click', async function() {
-            // In a real implementation, this would extend the session
-            // For now, we'll just refresh the session status
-            await checkSession();
-            document.getElementById('logoutWarning').classList.add('hidden');
-            warningShown = false;
+            try {
+                const response = await fetch('/api/user/extend-session', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    timeRemaining = data.timeRemaining;
+                    updateTimerDisplay();
+                    document.getElementById('logoutWarning').classList.add('hidden');
+                    warningShown = false;
+                } else {
+                    showAlert('Failed to extend session. Please log in again.');
+                }
+            } catch (error) {
+                console.error('Extend session error:', error);
+                showAlert('Network error. Please try again.');
+            }
         });
 
         // Refresh session status every 30 seconds
         setInterval(checkSession, 30000);
+
+        // Handle page visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Refresh session when user returns to the page
+                checkSession();
+            }
+        });
     </script>
 </body>
 </html>
-
